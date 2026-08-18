@@ -1424,7 +1424,7 @@ const promoCodeEl = document.querySelector('[data-promo-code]');
 
 if (promoCopyButton && promoCodeEl) {
   promoCopyButton.addEventListener('click', async () => {
-    const code = promoCodeEl.textContent?.trim() || 'LIP7';
+    const code = promoCodeEl.textContent?.trim() || 'FESTIWAL5';
 
     try {
       await navigator.clipboard.writeText(code);
@@ -1434,7 +1434,7 @@ if (promoCopyButton && promoCodeEl) {
         promoCopyButton.textContent = original;
       }, 1500);
     } catch (_error) {
-      promoCopyButton.textContent = 'Kod: LIP7';
+      promoCopyButton.textContent = 'Kod: FESTIWAL5';
       window.setTimeout(() => {
         promoCopyButton.textContent = 'Skopiuj kod';
       }, 1500);
