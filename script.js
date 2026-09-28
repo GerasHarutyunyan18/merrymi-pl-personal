@@ -8,6 +8,7 @@ const LOCAL_PRODUCT_LINKS = {
   'Produkty': 'products.html',
   'MerryMi Panda X 40K': 'produkt-panda-x-40k.html',
   'MerryMi M-Mecha 16K': 'produkt-m-mecha-16k.html',
+  'MerryMi Blade Max 90K': 'produkt-blade-max-90k.html',
   'MerryMi Blade 30K': 'produkt-blade-30k.html',
   'MerryMi Mecha Pro 35K': 'produkt-mecha-pro-35k.html',
   'MerryMi WiFlux 24K': 'produkt-wiflux-24k.html',
@@ -18,6 +19,7 @@ const LOCAL_PRODUCT_LINKS = {
   'MerryMi Salts 30ml': 'produkt-salts-30ml.html'
 };
 const DBUCHA_PRODUCT_URLS = {
+  'blade-max-90k': 'https://www.dbucha.com/products/jednorazowki-merrymi-blade-max-90k',
   'panda-x-40k': 'https://www.dbucha.com/products/jednorazowki-merrymi-panda-x-40k-buchow',
   'm-mecha-16k': 'https://www.dbucha.com/products/merrymi-m-mecha-16k-buchow',
   'blade-30k': 'https://www.dbucha.com/products/merrymi-blade-30k-buchow',
@@ -30,6 +32,7 @@ const DBUCHA_PRODUCT_URLS = {
   'salts-30ml': 'https://www.dbucha.com/products/e-liquid-merrymi-salts-30ml-sole-nikotynowe'
 };
 const DETAIL_FILE_TO_PRODUCT_ID = {
+  'produkt-blade-max-90k.html': 'blade-max-90k',
   'produkt-panda-x-40k.html': 'panda-x-40k',
   'produkt-m-mecha-16k.html': 'm-mecha-16k',
   'produkt-blade-30k.html': 'blade-30k',
@@ -781,6 +784,7 @@ if (productPage) {
 }
 
 const PRODUCT_REVIEW_AVERAGE = {
+  'blade-max-90k': 4.8,
   'panda-x-40k': 4.7,
   'm-mecha-16k': 4.7,
   'blade-30k': 4.7,

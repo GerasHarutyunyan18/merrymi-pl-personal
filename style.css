@@ -3299,6 +3299,8 @@ body.modal-open {
 }
 
 .variant-card {
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border-radius: 20px;
   border: 1px solid rgba(0, 0, 0, 0.08);
@@ -3352,7 +3354,9 @@ body.modal-open {
 }
 
 .variant-card__body {
+  flex: 1;
   display: grid;
+  grid-template-rows: auto 1fr auto;
   gap: 10px;
   padding: 12px 12px 14px;
 }

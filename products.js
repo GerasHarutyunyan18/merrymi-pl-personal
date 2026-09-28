@@ -83,6 +83,25 @@ const PRODUCTS = [
     ]
   },
   {
+    id: 'blade-max-90k',
+    name: 'MerryMi Blade Max 90K',
+    family: 'BLADE',
+    image: 'images/merrymi-blade-max-90k.jpg',
+    description: 'MerryMi Blade Max 90K to najnowsza, mocno ulepszona wersja serii Blade z 2% nikotyny (20 mg/ml) i wydajnością do 90 000 buchów w trybie ECO. Urządzenie łączy zbiornik 28 ml, akumulator 1150 mAh z ładowaniem USB-C, grzałkę Dual Mesh, 4 tryby mocy oraz technologię Flavor-Lock, która chroni smak od pierwszego do ostatniego bucha. To jednorazówka premium oraz e papieros dla osób, które wybierają jednorazówki i e papierosy jednorazowe.',
+    variants: [
+      { name: '🫐 Crazy Blueberry', image: 'variant-images/merrymi-blade-max-90k/Crazy-Blueberry.jpg' },
+      { name: '🍒 Fizzy Cherry', image: 'variant-images/merrymi-blade-max-90k/Fizzy-Cherry.jpg' },
+      { name: '🍊 Grapefruit Refresher', image: 'variant-images/merrymi-blade-max-90k/Grapefruit-Refresher.jpg' },
+      { name: '🍇 Grape Mint', image: 'variant-images/merrymi-blade-max-90k/Grape-Mint.jpg' },
+      { name: '🍏 Green Apple', image: 'variant-images/merrymi-blade-max-90k/Green-Apple.jpg' },
+      { name: '🍑 Iced Peach Melon', image: 'variant-images/merrymi-blade-max-90k/Iced-Peach-Melon.jpg' },
+      { name: '🍉 Lush Ice', image: 'variant-images/merrymi-blade-max-90k/Lush-Ice.jpg' },
+      { name: '🫐 Mixed Berries', image: 'variant-images/merrymi-blade-max-90k/Mixed-Berries.jpg' },
+      { name: '🍓 Prime Strawberry', image: 'variant-images/merrymi-blade-max-90k/Prime-Strawberry.jpg' },
+      { name: '🍊 Valencia Orange', image: 'variant-images/merrymi-blade-max-90k/Valencia-Orange.jpg' }
+    ]
+  },
+  {
     id: 'blade-30k',
     name: 'MerryMi Blade 30K',
     family: 'BLADE',
@@ -312,6 +331,7 @@ const PRODUCTS = [
 ];
 
 const DBUCHA_BUY_BY_ID = {
+  'blade-max-90k': 'https://www.dbucha.com/products/jednorazowki-merrymi-blade-max-90k',
   'panda-x-40k': 'https://www.dbucha.com/products/jednorazowki-merrymi-panda-x-40k-buchow',
   'm-mecha-16k': 'https://www.dbucha.com/products/merrymi-m-mecha-16k-buchow',
   'blade-30k': 'https://www.dbucha.com/products/merrymi-blade-30k-buchow',
