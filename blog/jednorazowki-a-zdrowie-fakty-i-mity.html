@@ -21,8 +21,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Teko:wght@400;500;600;700&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="../style.css?v=20260930">
-  <script defer src="../script.js?v=20260930"></script>
+  <link rel="stylesheet" href="../style.css?v=20260930-3">
+  <script defer src="../script.js?v=20260930-3"></script>
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -40,6 +40,21 @@
       "mainEntityOfPage": "https://merrymi.pl/blog/jednorazowki-a-zdrowie-fakty-i-mity.html"
     }
   </script>
+  <script>
+    (function () {
+      try {
+        var root = document.documentElement;
+        var ref = document.referrer;
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var force = /[?&]intro(?:[=&]|$)/.test(location.search);
+        if (!force && (reduce || (ref && ref.indexOf(location.origin + '/') === 0))) return;
+        root.classList.add('logo-intro');
+        setTimeout(function () {
+          if (!root.classList.contains('logo-intro-started')) root.classList.remove('logo-intro');
+        }, 4000);
+      } catch (e) {}
+    })();
+  </script>
 </head>
 
 <body>
@@ -55,8 +70,9 @@
   <header class="site-header">
     <div class="container site-header__inner">
       <h1 class="brand">
-        <a href="../index.html" aria-label="merrymi - Strona Główna">
-          <img src="../images/jednorazowki-merrymi-logo-merrymi.png" alt="Logo MerryMi" width="190" height="52">
+        <a class="brand-logo" href="../index.html" aria-label="merrymi - Strona Główna">
+          <img class="brand-logo__old" src="../images/jednorazowki-merrymi-logo-merrymi.png" alt="" width="190" height="52" aria-hidden="true">
+          <img class="brand-logo__new" src="../images/merrymi-logo.png" alt="Logo MerryMi" width="254" height="200">
         </a>
       </h1>
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav">
@@ -148,7 +164,7 @@
   <footer class="site-footer">
     <div class="container site-footer__top">
       <div class="footer-brand">
-        <img src="../images/jednorazowki-merrymi-logo-merrymi.png" alt="Logo MerryMi" width="190" height="52">
+        <img src="../images/merrymi-logo.png" alt="Logo MerryMi" width="254" height="200">
       </div>
       <p class="footer-slogan">Vape dobrany <strong>dla ciebie</strong></p>
     </div>

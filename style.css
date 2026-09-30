@@ -288,6 +288,127 @@ summary:focus-visible {
   height: 57px;
 }
 
+/* Logo: old and new logo share one cell; the intro morphs one into the other */
+.brand-logo {
+  position: relative;
+  display: grid;
+  align-items: center;
+  justify-items: start;
+}
+
+.brand-logo > img {
+  grid-area: 1 / 1;
+}
+
+.brand-logo__old {
+  display: none;
+}
+
+html.logo-intro .brand-logo__old {
+  display: block;
+  transition: filter 420ms ease;
+}
+
+html.logo-intro .brand-logo__new {
+  opacity: 0;
+  transform: scale(0.55) rotate(-8deg);
+  filter: blur(8px) brightness(2.2);
+}
+
+html.logo-intro-casting .brand-logo__old {
+  filter: drop-shadow(0 0 6px rgba(255, 140, 26, 0.85)) drop-shadow(0 0 14px rgba(255, 95, 162, 0.45)) brightness(1.12);
+  animation: brand-logo-tremble 110ms linear infinite;
+}
+
+html.logo-intro.logo-intro-reveal .brand-logo__new {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  animation: brand-logo-pop 1000ms cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+
+/* never show both logos at once */
+html.logo-intro-reveal .brand-logo__old {
+  visibility: hidden !important;
+}
+
+.brand-logo__magic {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 95;
+  pointer-events: none;
+}
+
+.brand-logo__shine {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.95) 48%, rgba(255, 236, 190, 0.9) 52%, transparent 70%);
+  background-size: 260% 100%;
+  background-position: 130% 0;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  mix-blend-mode: screen;
+  animation: brand-logo-shine 900ms ease-in-out forwards;
+}
+
+@keyframes brand-logo-tremble {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(0.6px, -0.4px);
+  }
+
+  50% {
+    transform: translate(-0.5px, 0.5px);
+  }
+
+  75% {
+    transform: translate(0.4px, 0.3px);
+  }
+}
+
+@keyframes brand-logo-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(-14deg);
+    filter: blur(6px) brightness(2.4) drop-shadow(0 0 0 rgba(255, 150, 40, 0));
+  }
+
+  45% {
+    opacity: 1;
+    transform: scale(1.32) rotate(4deg);
+    filter: blur(0) brightness(1.45) drop-shadow(0 0 16px rgba(255, 150, 40, 0.95));
+  }
+
+  70% {
+    transform: scale(0.93) rotate(-1.5deg);
+    filter: blur(0) brightness(1.15) drop-shadow(0 0 10px rgba(255, 150, 40, 0.6));
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: blur(0) brightness(1) drop-shadow(0 0 0 rgba(255, 150, 40, 0));
+  }
+}
+
+@keyframes brand-logo-shine {
+  from {
+    background-position: 130% 0;
+  }
+
+  to {
+    background-position: -30% 0;
+  }
+}
+
 .desktop-nav {
   display: none;
 }

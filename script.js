@@ -180,7 +180,7 @@ if (mobileNavInner && !mobileNavInner.querySelector('.mobile-nav__brand')) {
   brand.className = 'mobile-nav__brand';
   brand.href = withLocalPrefix('index.html');
   brand.setAttribute('aria-label', 'MerryMi - Strona główna');
-  brand.innerHTML = '<img src="images/jednorazowki-merrymi-logo-merrymi.png" alt="Logo MerryMi" width="160" height="44">';
+  brand.innerHTML = `<img src="${withLocalPrefix('images/merrymi-logo.png')}" alt="Logo MerryMi" width="254" height="200">`;
   mobileNavInner.prepend(brand);
 }
 
@@ -319,6 +319,608 @@ function setupWholesaleModal() {
 
 setupWholesaleModal();
 
+// Logo intro: on entering the site the old logo is "enchanted" into the new one.
+// The inline <head> script decides whether to play it (adds html.logo-intro).
+const LOGO_INTRO_DELAY = 1000;
+const LOGO_SPARKLE_COLORS = ['#ffb347', '#ff8c1a', '#ff5fa2', '#8a63ff', '#3da9fc', '#ffd166'];
+
+function setupLogoIntro() {
+  const root = document.documentElement;
+  if (!root.classList.contains('logo-intro')) return;
+
+  root.classList.add('logo-intro-started');
+
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    root.classList.remove('logo-intro', 'logo-intro-started', 'logo-intro-casting', 'logo-intro-reveal');
+    window.dispatchEvent(new CustomEvent('merrymi:logo-intro-end'));
+  };
+
+  // The header markup is rebuilt on DOMContentLoaded (ensureMainHeading swaps the <h1>),
+  // so the logo elements are looked up only when they are needed, never cached early.
+  const getParts = () => {
+    const link = document.querySelector('.site-header .brand-logo');
+    return {
+      link,
+      oldImg: link?.querySelector('.brand-logo__old'),
+      newImg: link?.querySelector('.brand-logo__new')
+    };
+  };
+
+  const whenDomReady = () => (document.readyState === 'loading'
+    ? new Promise((resolve) => document.addEventListener('DOMContentLoaded', resolve, { once: true }))
+    : Promise.resolve());
+
+  const whenLoaded = (img) => (!img || img.complete
+    ? Promise.resolve()
+    : new Promise((resolve) => {
+      img.addEventListener('load', resolve, { once: true });
+      img.addEventListener('error', resolve, { once: true });
+    }));
+
+  const whenVisible = () => (document.hidden
+    ? new Promise((resolve) => {
+      const onChange = () => {
+        if (document.hidden) return;
+        document.removeEventListener('visibilitychange', onChange);
+        resolve();
+      };
+      document.addEventListener('visibilitychange', onChange);
+    })
+    : Promise.resolve());
+
+  whenDomReady()
+    .then(() => new Promise((resolve) => window.setTimeout(resolve, 0)))
+    .then(() => {
+      const { oldImg, newImg } = getParts();
+      return Promise.all([whenLoaded(oldImg), whenLoaded(newImg)]);
+    })
+    .then(whenVisible)
+    .then(() => new Promise((resolve) => window.setTimeout(resolve, LOGO_INTRO_DELAY)))
+    .then(() => {
+      const { link, oldImg, newImg } = getParts();
+      if (!link || !oldImg?.naturalWidth || !newImg?.naturalWidth) return null;
+      return castLogoSpell(link, oldImg, newImg);
+    })
+    .catch(() => {})
+    .then(finish);
+}
+
+function castLogoSpell(link, oldImg, newImg) {
+  return new Promise((resolve) => {
+    const root = document.documentElement;
+    const T = {
+      circleIn: 0,
+      wandStart: 480,
+      wandEnd: 1260,
+      circleMove: 1150,
+      arriveMin: 1700,
+      arriveMax: 2150,
+      reveal: 2200,
+      shine: 2750,
+      end: 4000
+    };
+
+    // Everything is drawn on one fixed overlay, so the magic can spread across the whole
+    // header width without ever widening the page (no horizontal scroll on phones).
+    const start = link.getBoundingClientRect();
+    const oldBox = {
+      x: start.left + oldImg.offsetLeft,
+      y: start.top + oldImg.offsetTop,
+      w: oldImg.offsetWidth,
+      h: oldImg.offsetHeight
+    };
+    const newBox = {
+      x: start.left + newImg.offsetLeft,
+      y: start.top + newImg.offsetTop,
+      w: newImg.offsetWidth,
+      h: newImg.offsetHeight
+    };
+    const width = document.documentElement.clientWidth;
+    const height = Math.min(window.innerHeight, Math.round(start.bottom + 320));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'brand-logo__magic';
+    canvas.setAttribute('aria-hidden', 'true');
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    const rand = (min, max) => min + Math.random() * (max - min);
+    const clamp01 = (v) => Math.min(1, Math.max(0, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2);
+    const easeInOutSine = (t) => (1 - Math.cos(Math.PI * t)) / 2;
+    const easeOutCubic = (t) => 1 - (1 - t) ** 3;
+    const pick = (list) => list[Math.floor(Math.random() * list.length)];
+    const shuffle = (list) => {
+      for (let i = list.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [list[i], list[j]] = [list[j], list[i]];
+      }
+      return list;
+    };
+
+    // Pixel sampling (throws on file:// because the canvas is tainted - then we fall back to sparkles only).
+    const sample = (img, b, step) => {
+      const w = Math.max(1, Math.round(b.w));
+      const h = Math.max(1, Math.round(b.h));
+      const off = document.createElement('canvas');
+      off.width = w;
+      off.height = h;
+      const octx = off.getContext('2d', { willReadFrequently: true });
+      octx.drawImage(img, 0, 0, w, h);
+      const data = octx.getImageData(0, 0, w, h).data;
+      const points = [];
+      for (let y = 0; y < h; y += step) {
+        for (let x = 0; x < w; x += step) {
+          const i = (y * w + x) * 4;
+          if (data[i + 3] < 150) continue;
+          if (data[i] > 235 && data[i + 1] > 235 && data[i + 2] > 235) continue;
+          points.push({ x: b.x + x, y: b.y + y, r: data[i], g: data[i + 1], b: data[i + 2] });
+        }
+      }
+      return points;
+    };
+
+    let sources = [];
+    let targets = [];
+    try {
+      sources = shuffle(sample(oldImg, oldBox, 2)).slice(0, 1400);
+      targets = shuffle(sample(newImg, newBox, 2));
+    } catch (error) {
+      sources = [];
+      targets = [];
+    }
+
+    const oldCenter = { x: oldBox.x + oldBox.w / 2, y: oldBox.y + oldBox.h / 2 };
+    const center = { x: newBox.x + newBox.w / 2, y: newBox.y + newBox.h / 2 };
+    const wandFrom = oldBox.x + oldBox.w + 30;
+    const wandTo = oldBox.x - 18;
+    const wandSpan = wandFrom - wandTo;
+    const wandTimeAt = (x) => {
+      const p = clamp01((wandFrom - x) / wandSpan);
+      return T.wandStart + (Math.acos(1 - 2 * p) / Math.PI) * (T.wandEnd - T.wandStart);
+    };
+
+    const particles = [];
+    if (sources.length && targets.length) {
+      const count = Math.max(sources.length, targets.length);
+      for (let i = 0; i < count; i += 1) {
+        const s = sources[i % sources.length];
+        const t = targets[i % targets.length];
+        particles.push({
+          s,
+          t,
+          release: wandTimeAt(s.x) + rand(0, 70),
+          arrive: rand(T.arriveMin, T.arriveMax),
+          c1: { x: s.x + rand(-70, 70), y: s.y - rand(40, 130) },
+          c2: { x: t.x + rand(-110, 110), y: t.y + rand(-80, 90) },
+          spin: (Math.random() < 0.5 ? -1 : 1) * rand(0.4, 1.1),
+          size: rand(1.6, 3),
+          star: Math.random() < 0.16,
+          color: pick(LOGO_SPARKLE_COLORS)
+        });
+      }
+    }
+
+    const stars = [];
+    const spawnStar = (x, y, options = {}) => {
+      stars.push({
+        x,
+        y,
+        vx: options.vx ?? rand(-0.03, 0.03),
+        vy: options.vy ?? rand(-0.04, 0.02),
+        gravity: options.gravity ?? 0.00006,
+        life: 0,
+        max: options.max ?? rand(420, 900),
+        size: options.size ?? rand(2, 5),
+        rot: rand(0, Math.PI),
+        vr: rand(-0.006, 0.006),
+        color: options.color ?? pick(LOGO_SPARKLE_COLORS)
+      });
+    };
+
+    const sparklePath = (r) => {
+      ctx.beginPath();
+      ctx.moveTo(0, -r);
+      ctx.quadraticCurveTo(r * 0.16, -r * 0.16, r, 0);
+      ctx.quadraticCurveTo(r * 0.16, r * 0.16, 0, r);
+      ctx.quadraticCurveTo(-r * 0.16, r * 0.16, -r, 0);
+      ctx.quadraticCurveTo(-r * 0.16, -r * 0.16, 0, -r);
+    };
+
+    const drawSparkle = (x, y, r, rot, color, alpha) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+      sparklePath(r);
+      ctx.fill();
+      ctx.restore();
+    };
+
+    // Rune circle, seen in perspective (an ellipse) - the "spell" being cast.
+    const drawMagicCircle = (cx, cy, r, rot, draw, alpha) => {
+      if (alpha <= 0 || r <= 0) return;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(1, 0.36);
+      ctx.rotate(rot);
+      ctx.globalAlpha = alpha;
+      ctx.shadowColor = 'rgba(255, 170, 60, 0.9)';
+      ctx.shadowBlur = 10;
+      ctx.lineCap = 'round';
+
+      ctx.strokeStyle = '#ffb347';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2 * draw);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#8a63ff';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 7]);
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.8, -Math.PI * 2 * draw, 0);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = 'rgba(255, 95, 162, 0.85)';
+      ctx.lineWidth = 1.6;
+      for (let k = 0; k < 2; k += 1) {
+        ctx.beginPath();
+        for (let i = 0; i <= 3; i += 1) {
+          const a = (Math.PI * 2 * i) / 3 + k * Math.PI / 3 - Math.PI / 2;
+          const px = Math.cos(a) * r * 0.74;
+          const py = Math.sin(a) * r * 0.74;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.globalAlpha = alpha * clamp01(draw * 1.4 - 0.4);
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = alpha * draw;
+      ctx.strokeStyle = '#ff8c1a';
+      ctx.lineWidth = 1.6;
+      for (let i = 0; i < 36; i += 1) {
+        const a = (Math.PI * 2 * i) / 36;
+        const inner = i % 3 === 0 ? 0.84 : 0.89;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * r * inner, Math.sin(a) * r * inner);
+        ctx.lineTo(Math.cos(a) * r * 0.96, Math.sin(a) * r * 0.96);
+        ctx.stroke();
+      }
+
+      ctx.shadowBlur = 0;
+      for (let i = 0; i < 6; i += 1) {
+        const a = (Math.PI * 2 * i) / 6 - rot * 1.5;
+        ctx.save();
+        ctx.translate(Math.cos(a) * r * 1.1, Math.sin(a) * r * 1.1);
+        ctx.fillStyle = LOGO_SPARKLE_COLORS[i % LOGO_SPARKLE_COLORS.length];
+        sparklePath(9);
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.restore();
+    };
+
+    const bezier = (a, b, c, d, t) => {
+      const u = 1 - t;
+      return u * u * u * a + 3 * u * u * t * b + 3 * u * t * t * c + t * t * t * d;
+    };
+
+    const tail = [];
+    let shine = null;
+    let revealed = false;
+    let wandGone = false;
+    let startTime = null;
+    let lastTime = null;
+    let done = false;
+    let watchdog = 0;
+
+    const cleanup = () => {
+      if (done) return;
+      done = true;
+      window.clearTimeout(watchdog);
+      canvas.remove();
+      shine?.remove();
+      oldImg.style.clipPath = '';
+      oldImg.style.visibility = '';
+      resolve();
+    };
+    // never get stuck half-way (e.g. the tab is hidden mid-animation)
+    watchdog = window.setTimeout(cleanup, T.end + 2500);
+
+    root.classList.add('logo-intro-casting');
+
+    const frame = (now) => {
+      if (done) return;
+      if (startTime === null) {
+        startTime = now;
+        lastTime = now;
+      }
+      const tau = now - startTime;
+      const dt = Math.min(50, now - lastTime);
+      lastTime = now;
+
+      // follow the header if the page was scrolled meanwhile
+      const current = link.isConnected ? link.getBoundingClientRect() : start;
+      const offX = current.left - start.left;
+      const offY = current.top - start.top;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+      ctx.fillRect(0, 0, width, height);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      ctx.setTransform(dpr, 0, 0, dpr, offX * dpr, offY * dpr);
+
+      // 1. the rune circle lights up, then glides to the new logo and focuses the spell
+      if (tau < T.reveal) {
+        const draw = easeOutCubic(clamp01(tau / 520));
+        const move = easeInOutCubic(clamp01((tau - T.circleMove) / (T.reveal - T.circleMove)));
+        const r = lerp(oldBox.w * 0.62, newBox.w * 0.78, move);
+        const cx = lerp(oldCenter.x, center.x, move);
+        const cy = lerp(oldCenter.y + oldBox.h * 0.08, center.y + newBox.h * 0.08, move);
+        drawMagicCircle(cx, cy, r, tau * 0.0022, draw, 0.3 * (0.75 + 0.25 * Math.sin(tau * 0.012)));
+      }
+
+      // magic gathers around the old logo
+      if (tau < T.wandEnd) {
+        for (let k = 0; k < 3; k += 1) {
+          const angle = rand(0, Math.PI * 2);
+          const rx = oldBox.w / 2 + rand(30, 90);
+          const ry = oldBox.h / 2 + rand(20, 60);
+          const x = oldCenter.x + Math.cos(angle) * rx;
+          const y = oldCenter.y + Math.sin(angle) * ry;
+          spawnStar(x, y, {
+            vx: (oldCenter.x - x) * 0.0017,
+            vy: (oldCenter.y - y) * 0.0017,
+            gravity: 0,
+            max: rand(420, 700),
+            size: rand(2, 4.6)
+          });
+        }
+      }
+
+      // 2. the wand (comet) sweeps right -> left and dissolves the old letters
+      if (tau >= T.wandStart && tau <= T.wandEnd + 160) {
+        const p = easeInOutSine(clamp01((tau - T.wandStart) / (T.wandEnd - T.wandStart)));
+        const wx = wandFrom - p * wandSpan;
+        const wy = oldCenter.y - Math.sin(Math.PI * p) * oldBox.h * 0.75;
+        const localX = wx - oldBox.x;
+        oldImg.style.clipPath = `inset(-30% ${Math.max(0, oldBox.w - localX)}px -30% 0)`;
+
+        tail.unshift({ x: wx, y: wy });
+        if (tail.length > 18) tail.pop();
+        const fadeIn = clamp01((tau - T.wandStart) / 90);
+        for (let i = tail.length - 1; i > 0; i -= 1) {
+          const k = 1 - i / tail.length;
+          ctx.strokeStyle = i % 2 ? `rgba(255, 95, 162, ${0.55 * k * fadeIn})` : `rgba(255, 190, 80, ${0.7 * k * fadeIn})`;
+          ctx.lineWidth = 9 * k + 1;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(tail[i].x, tail[i].y);
+          ctx.lineTo(tail[i - 1].x, tail[i - 1].y);
+          ctx.stroke();
+        }
+
+        const head = ctx.createRadialGradient(wx, wy, 0, wx, wy, 30);
+        head.addColorStop(0, `rgba(255, 255, 255, ${fadeIn})`);
+        head.addColorStop(0.2, `rgba(255, 209, 102, ${fadeIn})`);
+        head.addColorStop(0.55, `rgba(255, 95, 162, ${0.45 * fadeIn})`);
+        head.addColorStop(1, 'rgba(138, 99, 255, 0)');
+        ctx.fillStyle = head;
+        ctx.beginPath();
+        ctx.arc(wx, wy, 30, 0, Math.PI * 2);
+        ctx.fill();
+        drawSparkle(wx, wy, 11, tau * 0.01, '#ff8c1a', fadeIn);
+
+        for (let k = 0; k < 4; k += 1) {
+          spawnStar(wx + rand(-6, 6), wy + rand(-6, 6), {
+            vx: rand(0.01, 0.09),
+            vy: rand(-0.03, 0.07),
+            max: rand(420, 800),
+            size: rand(2.4, 6.5)
+          });
+        }
+        if (!particles.length && localX > 0 && localX < oldBox.w) {
+          for (let k = 0; k < 5; k += 1) {
+            spawnStar(wx + rand(-3, 3), oldBox.y + rand(0, oldBox.h), {
+              vx: rand(-0.08, 0.02),
+              vy: rand(-0.08, 0),
+              max: rand(500, 900)
+            });
+          }
+        }
+      }
+
+      if (!wandGone && tau > T.wandEnd) {
+        wandGone = true;
+        oldImg.style.visibility = 'hidden';
+        root.classList.remove('logo-intro-casting');
+      }
+
+      // fairy dust twinkles across the whole header width
+      if (tau > 800 && tau < 2900 && Math.random() < 0.8) {
+        spawnStar(rand(0, width), rand(Math.max(0, start.top - 20), start.bottom + 60), {
+          vx: rand(-0.01, 0.01),
+          vy: rand(0.005, 0.03),
+          gravity: 0,
+          max: rand(600, 1100),
+          size: rand(1.6, 3.8)
+        });
+      }
+
+      // 3. the dust swirls and assembles into the new logo
+      const fadeOut = 1 - clamp01((tau - T.reveal) / 320);
+      if (fadeOut > 0) {
+        for (let i = 0; i < particles.length; i += 1) {
+          const pt = particles[i];
+          if (tau < pt.release) continue;
+          const u = clamp01((tau - pt.release) / (pt.arrive - pt.release));
+          const e = easeInOutCubic(u);
+          let x = bezier(pt.s.x, pt.c1.x, pt.c2.x, pt.t.x, e);
+          let y = bezier(pt.s.y, pt.c1.y, pt.c2.y, pt.t.y, e);
+          const angle = pt.spin * Math.sin(Math.PI * e);
+          const dx = x - center.x;
+          const dy = y - center.y;
+          x = center.x + dx * Math.cos(angle) - dy * Math.sin(angle);
+          y = center.y + dx * Math.sin(angle) + dy * Math.cos(angle);
+          const alpha = clamp01((tau - pt.release) / 60) * fadeOut;
+
+          if (pt.star && e < 0.92) {
+            drawSparkle(x, y, 2.4 + 3 * Math.sin(Math.PI * e), tau * 0.008 + i, pt.color, alpha);
+            continue;
+          }
+          const glow = Math.sin(Math.PI * e) * 0.5;
+          const r = Math.round((pt.s.r + (pt.t.r - pt.s.r) * e) * (1 - glow) + 255 * glow);
+          const g = Math.round((pt.s.g + (pt.t.g - pt.s.g) * e) * (1 - glow) + 200 * glow);
+          const b = Math.round((pt.s.b + (pt.t.b - pt.s.b) * e) * (1 - glow) + 90 * glow);
+          const size = pt.size * (1 + 0.8 * Math.sin(Math.PI * e));
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+          ctx.fillRect(x - size / 2, y - size / 2, size, size);
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      if (tau > T.wandEnd - 250 && tau < T.reveal) {
+        for (let k = 0; k < 2; k += 1) {
+          const angle = rand(0, Math.PI * 2);
+          const dist = rand(55, 120);
+          const x = center.x + Math.cos(angle) * dist;
+          const y = center.y + Math.sin(angle) * dist * 0.7;
+          spawnStar(x, y, { vx: (center.x - x) * 0.003, vy: (center.y - y) * 0.003, gravity: 0, max: rand(280, 420), size: rand(2, 4.5) });
+        }
+      }
+
+      // 4. reveal: light rays, shockwaves and fireworks
+      if (!revealed && tau >= T.reveal) {
+        revealed = true;
+        root.classList.add('logo-intro-reveal');
+        for (let k = 0; k < 44; k += 1) {
+          const angle = (Math.PI * 2 * k) / 44 + rand(-0.08, 0.08);
+          const speed = rand(0.14, 0.42);
+          spawnStar(center.x, center.y, {
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            gravity: 0.00018,
+            max: rand(900, 1500),
+            size: rand(3, 7.5)
+          });
+        }
+      }
+
+      if (revealed) {
+        const since = tau - T.reveal;
+        const rays = clamp01(since / 900);
+        if (rays < 1) {
+          const fade = Math.sin(Math.PI * rays);
+          ctx.save();
+          ctx.translate(center.x, center.y);
+          ctx.rotate(since * 0.0009);
+          for (let i = 0; i < 14; i += 1) {
+            const a = (Math.PI * 2 * i) / 14;
+            const len = newBox.h * (2 + 0.7 * Math.sin(i * 1.7 + since * 0.01));
+            const grad = ctx.createLinearGradient(0, 0, Math.cos(a) * len, Math.sin(a) * len);
+            grad.addColorStop(0, `rgba(255, 200, 90, ${0.2 * fade})`);
+            grad.addColorStop(1, 'rgba(255, 140, 26, 0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(a - 0.07) * len, Math.sin(a - 0.07) * len);
+            ctx.lineTo(Math.cos(a + 0.07) * len, Math.sin(a + 0.07) * len);
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+
+        const flashK = clamp01(since / 560);
+        if (flashK < 1) {
+          const radius = newBox.h * (0.7 + 1.6 * flashK);
+          const fade = (1 - flashK) ** 2;
+          // low alpha on purpose: the motion-trail fade makes it accumulate frame over frame
+          const flash = ctx.createRadialGradient(center.x, center.y, 0, center.x, center.y, radius);
+          flash.addColorStop(0, `rgba(255, 224, 150, ${0.16 * fade})`);
+          flash.addColorStop(0.4, `rgba(255, 170, 70, ${0.06 * fade})`);
+          flash.addColorStop(1, 'rgba(255, 95, 162, 0)');
+          ctx.fillStyle = flash;
+          ctx.beginPath();
+          ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        [['255, 179, 71', 0], ['255, 95, 162', 110], ['138, 99, 255', 220]].forEach(([rgb, delay]) => {
+          const k = clamp01((since - delay) / 720);
+          if (k <= 0 || k >= 1) return;
+          ctx.lineWidth = 3.5 * (1 - k) + 0.5;
+          ctx.strokeStyle = `rgba(${rgb}, ${1 - k})`;
+          ctx.beginPath();
+          ctx.arc(center.x, center.y, newBox.h * (0.4 + 2.8 * easeOutCubic(k)), 0, Math.PI * 2);
+          ctx.stroke();
+        });
+
+        if (since < 1300 && Math.random() < 0.5) {
+          spawnStar(newBox.x + rand(-8, newBox.w + 8), newBox.y + rand(-8, newBox.h + 8), {
+            vx: 0,
+            vy: rand(-0.02, 0),
+            gravity: 0,
+            max: rand(420, 750),
+            size: rand(2, 5)
+          });
+        }
+      }
+
+      if (!shine && tau >= T.shine) {
+        const src = newImg.currentSrc || newImg.src;
+        shine = document.createElement('span');
+        shine.className = 'brand-logo__shine';
+        shine.setAttribute('aria-hidden', 'true');
+        shine.style.cssText = `left:${newImg.offsetLeft}px;top:${newImg.offsetTop}px;width:${newBox.w}px;height:${newBox.h}px;`
+          + `-webkit-mask-image:url("${src}");mask-image:url("${src}")`;
+        link.appendChild(shine);
+      }
+
+      for (let i = stars.length - 1; i >= 0; i -= 1) {
+        const s = stars[i];
+        s.life += dt;
+        if (s.life >= s.max) {
+          stars.splice(i, 1);
+          continue;
+        }
+        s.vy += s.gravity * dt;
+        s.x += s.vx * dt;
+        s.y += s.vy * dt;
+        s.rot += s.vr * dt;
+        const life = s.life / s.max;
+        drawSparkle(s.x, s.y, s.size * (0.6 + 0.4 * Math.sin(Math.PI * life)), s.rot, s.color, Math.sin(Math.PI * life));
+      }
+
+      if (tau < T.end) {
+        window.requestAnimationFrame(frame);
+        return;
+      }
+      cleanup();
+    };
+
+    window.requestAnimationFrame(frame);
+  });
+}
+
+setupLogoIntro();
+
 function setupArrivalModal() {
   const isHomepage =
     window.location.pathname === '/' ||
@@ -383,7 +985,12 @@ function setupArrivalModal() {
     if (event.key === 'Escape' && !modal.hidden) closeModal();
   });
 
-  window.setTimeout(openModal, 700);
+  if (document.documentElement.classList.contains('logo-intro')) {
+    // let the logo transformation play first, then show the popup
+    window.addEventListener('merrymi:logo-intro-end', () => window.setTimeout(openModal, 500), { once: true });
+  } else {
+    window.setTimeout(openModal, 700);
+  }
 }
 
 setupArrivalModal();
@@ -1035,7 +1642,7 @@ function renderProductReviews() {
 const SITE_ORIGIN = 'https://merrymi.pl';
 const SITE_NAME = 'MerryMi';
 const DEFAULT_DBUCHA_COLLECTION_URL = 'https://www.dbucha.com/collections/merrymi-jednorazowki';
-const DEFAULT_LOGO_PATH = 'images/jednorazowki-merrymi-logo-merrymi.png';
+const DEFAULT_LOGO_PATH = 'images/merrymi-logo.png';
 
 function normalizeWhitespace(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
@@ -1167,7 +1774,7 @@ function getPageImage() {
     '.product-detail__media img',
     '.hero-slide.is-active img',
     '.catalog-card img',
-    '.brand img',
+    '.brand .brand-logo__new',
     '.footer-brand img'
   ];
 
