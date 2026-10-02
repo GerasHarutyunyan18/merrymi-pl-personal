@@ -1098,6 +1098,7 @@ if (heroSlider) {
 
     const activeSlide = slides[currentIndex];
     heroSlider.classList.toggle('hero-slider--plain-active', activeSlide?.classList.contains('hero-slide--plain'));
+    heroSlider.classList.toggle('hero-slider--launch-active', activeSlide?.classList.contains('hero-slide--plain-launch'));
   };
 
   slides.forEach((_, index) => {

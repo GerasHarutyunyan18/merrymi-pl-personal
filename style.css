@@ -1256,7 +1256,8 @@ body.modal-open {
   height: 100%;
 }
 
-.hero-plain-bar {
+.hero-plain-bar,
+.hero-launch-bar {
   display: none;
   align-items: center;
   justify-content: center;
@@ -1268,7 +1269,11 @@ body.modal-open {
   text-align: center;
 }
 
-.hero-slider.hero-slider--plain-active + .hero-plain-bar {
+.hero-slider.hero-slider--plain-active:not(.hero-slider--launch-active) ~ .hero-plain-bar {
+  display: flex;
+}
+
+.hero-slider.hero-slider--launch-active ~ .hero-launch-bar {
   display: flex;
 }
 
@@ -3846,7 +3851,8 @@ body.modal-open {
     object-position: center top;
   }
 
-  .hero-plain-bar {
+  .hero-plain-bar,
+  .hero-launch-bar {
     gap: 10px;
     padding: 14px 16px;
   }
