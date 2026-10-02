@@ -2035,7 +2035,7 @@ const promoCodeEl = document.querySelector('[data-promo-code]');
 
 if (promoCopyButton && promoCodeEl) {
   promoCopyButton.addEventListener('click', async () => {
-    const code = promoCodeEl.textContent?.trim() || 'JESIEN5';
+    const code = promoCodeEl.textContent?.trim() || 'HALLOW5';
 
     try {
       await navigator.clipboard.writeText(code);
@@ -2045,7 +2045,7 @@ if (promoCopyButton && promoCodeEl) {
         promoCopyButton.textContent = original;
       }, 1500);
     } catch (_error) {
-      promoCopyButton.textContent = 'Kod: JESIEN5';
+      promoCopyButton.textContent = 'Kod: HALLOW5';
       window.setTimeout(() => {
         promoCopyButton.textContent = 'Skopiuj kod';
       }, 1500);
