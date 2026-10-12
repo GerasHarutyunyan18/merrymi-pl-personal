@@ -322,7 +322,18 @@
   <main id="MainContent">
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-slider" data-slider>
-        <article class="hero-slide hero-slide--plain is-active" data-slide>
+        <article class="hero-slide hero-slide--plain hero-slide--plain-launch is-active" data-slide>
+          <div class="hero-slide__media">
+            <a href="https://www.dbucha.com/collections/merrymi-jednorazowki" class="hero-slide__plain-link" aria-label="Zobacz nowości MerryMi: Blade Max 90K i Mecha Twist 75K">
+              <picture>
+                <source media="(min-width: 768px)" srcset="images/blade-max-mecha-twist.png">
+                <img src="images/blade-max-mecha-twist-mobile.png" alt="MerryMi Blade Max 90K i Mecha Twist 75K">
+              </picture>
+            </a>
+          </div>
+        </article>
+
+        <article class="hero-slide hero-slide--plain" data-slide>
           <div class="hero-slide__media">
             <a href="https://www.dbucha.com/collections/merrymi-jednorazowki" class="hero-slide__plain-link" aria-label="Zobacz nowości MerryMi">
               <picture>
@@ -472,6 +483,11 @@
         <button class="hero-arrow hero-arrow--next" type="button" data-direction="next"
           aria-label="Następny slajd">›</button>
         <div class="hero-dots" aria-label="Nawigacja po slajdach"></div>
+      </div>
+      <div class="hero-launch-bar">
+        <p class="hero-plain-bar-text">Już wkrótce – wyłącznie na MerryMi.pl</p>
+        <a href="https://www.dbucha.com/collections/merrymi-jednorazowki"
+          class="hero-slide__cta hero-slide__cta--primary hero-slide__cta--pulse">Zobacz Nowości</a>
       </div>
       <div class="hero-plain-bar">
         <p class="hero-plain-bar-text">Nowa era jednorazówek już dostępna</p>
