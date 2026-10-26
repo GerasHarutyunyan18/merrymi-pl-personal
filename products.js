@@ -257,7 +257,7 @@ const PRODUCTS = [
     name: 'MerryMi Panda Twins 40K',
     family: 'PANDA',
     image: 'images/jednorazowki-merrymi-produkt-panda-twins-40k.jpg',
-    description: 'MerryMi Panda Twins 40K to model 2% nikotyny z bardzo długim czasem pracy i wydajnością do 40 000 buchów. Urządzenie wyróżnia się nowoczesną konstrukcją, wysokim komfortem użytkowania oraz ciekawymi duetami smaków w jednym produkcie. To jednorazówka premium oraz e papieros dla osób, które wybierają jednorazówki i e papierosy jednorazowe.',
+    description: 'MerryMi Panda Twins 40K to model 5% nikotyny z bardzo długim czasem pracy i wydajnością do 40 000 buchów. Urządzenie wyróżnia się nowoczesną konstrukcją, wysokim komfortem użytkowania oraz ciekawymi duetami smaków w jednym produkcie. To jednorazówka premium oraz e papieros dla osób, które wybierają jednorazówki i e papierosy jednorazowe.',
     variants: [
       { name: '🍏 Green Apple + 🍇 Grape Slush', image: 'variant-images/merrymi-panda-twins-40k/jednorazowki-merrymi-panda-twins-40k-green-apple-grape-slush-alt.png' },
       { name: '🍒 Cherry Cola + ⚡ Jager Red Energy', image: 'variant-images/merrymi-panda-twins-40k/jednorazowki-merrymi-panda-twins-40k-blue-razz-ice-love-66.png' },
